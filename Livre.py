@@ -8,7 +8,7 @@ class Book:
 
     def __str__(self) -> str:
         return f"Book : {self.__nom} de type {self.__tag}"
-    
+     
     @property
     def nom (self):
         return self.__nom
@@ -21,6 +21,7 @@ class Book:
     def image (self):
         return self.__image
 
+class book_encoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Book):
             return{
@@ -28,7 +29,6 @@ class Book:
                 'tag': obj.tag,
                 'image': obj.image
             }
-        return super().default(obj)
     
 
 
@@ -49,7 +49,9 @@ class Library:
                 self.__books.remove(book)
 
     def save(self):
-        pass
+        with open ('bib.json', 'w') as output:
+            save_str = json.dumps(self.__books, cls=book_encoder)
+            output.write(save_str)
 
         
 if __name__ == '__main__':
@@ -58,6 +60,8 @@ if __name__ == '__main__':
     lib.add_book(Book('fondation', 'sf', 'path/to/image'))
     lib.add_book(Book('test', 'sf', 'test/test' ))
     lib.display_books()
+    print('\n')
+    lib.save()
     lib.remove_book('fondation')
     lib.display_books()
 
