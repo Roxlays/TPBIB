@@ -1,4 +1,6 @@
 import json
+import socket
+import pickle
 
 class Book:
     def __init__(self, nom, tag, image):
@@ -53,8 +55,41 @@ class Library:
             save_str = json.dumps(self.__books, cls=book_encoder)
             output.write(save_str)
 
+
+def handle_client(conn, addr, biblio):
+    with conn:
+        print(f"Connected by {addr}")
+        while True:
+            data = conn.recv(1024)
+            if not data:
+                break
+            command, args = pickle.loads(data)
+            if command == 'ADD':
+                response = biblio.add_book(Book(*args))
+            elif command == 'GET':
+                response = biblio.display_books()
+            elif command == 'DEL':
+                response = biblio.remove_book(*args)
+            else:
+                response = "Commande inconnue"
+            conn.sendall(pickle.dumps(response))
+
+def main():
+    biblio = Library()
+    HOST = '127.0.0.1'
+    PORT = 65432
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((HOST, PORT))
+        s.listen()
+        print(f"Server started at {HOST} on port {PORT}")
+        while True:
+            conn, addr = s.accept()
+            handle_client(conn, addr, biblio)
+
+
         
 if __name__ == '__main__':
+    main()
     lib = Library()
     lib.display_books()
     lib.add_book(Book('fondation', 'sf', 'path/to/image'))
